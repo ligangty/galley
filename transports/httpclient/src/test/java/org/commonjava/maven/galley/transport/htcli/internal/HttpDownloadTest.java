@@ -27,6 +27,7 @@ import org.commonjava.maven.galley.model.Transfer;
 import org.commonjava.maven.galley.spi.transport.DownloadJob;
 import org.commonjava.maven.galley.transport.htcli.model.SimpleHttpLocation;
 import org.commonjava.maven.galley.transport.htcli.testutil.HttpTestFixture;
+import org.commonjava.maven.galley.util.UrlUtils;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -78,6 +79,38 @@ public class HttpDownloadTest
 
         assertThat( fixture.getAccessesFor( path ), equalTo( 1 ) );
     }
+
+    @Test
+    public void simpleRetrieveOfRedirectUrl()
+            throws Exception
+    {
+        final String path = "com/ibm/icu/icu4j/maven-metadata.xml";
+        final String baseUri = "http://download.lab.bos.redhat.com/brewroot/repos/jb-bxms-6.4-build/latest/maven";
+        final SimpleHttpLocation location = new SimpleHttpLocation( "test", baseUri, true, true, true, true, null );
+        final Transfer transfer = fixture.getTransfer( new ConcreteResource( location, path ) );
+        final String url = UrlUtils.buildUrl( baseUri, path );
+
+        Map<Transfer, Long> transferSizes = new HashMap<Transfer, Long>();
+
+        assertThat( transfer.exists(), equalTo( false ) );
+
+        final HttpDownload dl =
+                new HttpDownload( url, location, transfer, transferSizes, new EventMetadata(), fixture.getHttp(),
+                                  new ObjectMapper() );
+        final DownloadJob resultJob = dl.call();
+
+        final TransferException error = dl.getError();
+        assertThat( error, nullValue() );
+
+        assertThat( resultJob, notNullValue() );
+
+        final Transfer result = resultJob.getTransfer();
+
+        assertThat( result, notNullValue() );
+        assertThat( result.exists(), equalTo( true ) );
+        assertThat( transfer.exists(), equalTo( true ) );
+    }
+
 
     @Test
     public void simpleRetrieveOfMissingUrl()
