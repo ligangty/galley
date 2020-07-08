@@ -38,6 +38,10 @@ public final class ContentTypeUtils
         {
             return "application/json";
         }
+        else if ( path.endsWith( ".tar.gz" ) || path.endsWith( ".gzip" ) )
+        {
+            return "application/gzip";
+        }
 
         return MimetypesFileTypeMap.getDefaultFileTypeMap()
                                    .getContentType( path );
